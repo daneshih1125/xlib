@@ -1,4 +1,4 @@
-LDFLAGS = -lX11
+LDFLAGS = -lX11 -lpng
 
 all:
 	@for src in $(shell ls *.c); do \
