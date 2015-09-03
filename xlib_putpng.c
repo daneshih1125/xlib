@@ -234,6 +234,7 @@ int main(int argc, char **argv)
 		i++;
 		if (i == n)
 			i = 0;
+		XFree(ximage);
 	}
 #endif
 
