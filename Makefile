@@ -2,7 +2,7 @@ LDFLAGS = -lX11 -lpng
 
 all:
 	@for src in $(shell ls *.c); do \
-		$(CC) -o $${src%.*} $$src $(LDFLAGS); \
+		$(CC) -Wall -o $${src%.*} $$src $(LDFLAGS); \
 	done
 
 clean:
