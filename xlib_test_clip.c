@@ -13,6 +13,8 @@ int main(int argc, char **argv)
 	char hello[] = "hello";
 	XSelectionRequestEvent *xreq;
 	XSelectionEvent ev;
+	Atom targets_atom, clipboard_atom, text_atom;
+	Atom atom_list[2];
 
 	// connection to X server.
 	dpy = XOpenDisplay(NULL);
@@ -24,22 +26,22 @@ int main(int argc, char **argv)
 
 	screen = DefaultScreen(dpy);
 	win = XCreateSimpleWindow(dpy, RootWindow(dpy, screen),
-		0, 0, 100, 100,
+		0, 0, 10, 10,
 		1, BlackPixel(dpy, screen), WhitePixel(dpy, screen));
 
 	XSelectInput(dpy, win, PropertyChangeMask);
 	XMapWindow(dpy, win);
-	XChangeProperty (dpy, win, XA_WM_NAME, XA_STRING, 8,
-                   PropModeAppend, NULL, 0);
 
-	while (1) {
-		XNextEvent (dpy, &event);
-		if (event.type == PropertyNotify)
-			break;
-	}
+	clipboard_atom = XInternAtom(dpy, "CLIPBOARD", False);
+	targets_atom = XInternAtom(dpy, "TARGETS", False);
+  	text_atom = XInternAtom(dpy, "TEXT", False);
+	atom_list[0] = targets_atom;
+	atom_list[1] = text_atom;
+
+	XSetSelectionOwner(dpy, clipboard_atom, win, CurrentTime);
+	XSetSelectionOwner(dpy, XA_PRIMARY, win, CurrentTime);
  
 	while (1) {
-		XSetSelectionOwner(dpy, XA_PRIMARY, win, CurrentTime);
 		XFlush(dpy);
 		XNextEvent(dpy, &event);
 		if (event.type == SelectionRequest) {
@@ -47,6 +49,10 @@ int main(int argc, char **argv)
 			if (xreq->target == XA_STRING) {
 				XChangeProperty(dpy, xreq->requestor, xreq->property , XA_STRING, 8,
 						PropModeReplace, (unsigned char *)hello, strlen(hello));
+				ev.property = xreq->property;
+			} else if (xreq->target == targets_atom) {
+				XChangeProperty(dpy, xreq->requestor, xreq->property , XA_ATOM, 32,
+						PropModeReplace, (unsigned char *)atom_list, 2);
 				ev.property = xreq->property;
 			} else {
 				ev.property = None;
