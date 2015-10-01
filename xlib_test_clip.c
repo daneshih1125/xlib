@@ -16,7 +16,7 @@ int main(int argc, char **argv)
 	Atom targets_atom, clipboard_atom, text_atom;
 	Atom atom_list[2];
 
-	// connection to X server.
+	// connect to X server.
 	dpy = XOpenDisplay(NULL);
 
 	if (dpy == NULL) {
