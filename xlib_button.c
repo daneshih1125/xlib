@@ -9,7 +9,8 @@ int main(int argc, char **argv)
 	Window win, childwin;
 	XEvent event;
 
-	int i, x, y, width, height, shadow_width;
+	int i, x, y, shadow_width;
+	unsigned int width, height;
 	unsigned int border_width, depth;
 	Window root_win;
 	Colormap colormap;
