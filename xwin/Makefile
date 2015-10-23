@@ -7,6 +7,7 @@ CFLAGS += -Wall
 all: $(XWIN_LIB) $(TEST_XWIN)
 
 $(XWIN_OBJ): xwin.h
+	$(CC) -fPIC -c xwin.c
 
 $(XWIN_LIB): $(XWIN_OBJ)
 	$(CC) -fPIC $(CFLAGS) $(XWIN_OBJ) -o $@ -shared
@@ -16,4 +17,3 @@ $(TEST_XWIN): main.o $(XWIN_LIB)
 
 clean:
 	rm -f *.o $(XWIN_LIB) $(TEST_XWIN)
-
