@@ -6,7 +6,7 @@ CFLAGS += -Wall
 
 all: $(XWIN_LIB) $(TEST_XWIN)
 
-$(XWIN_OBJ): xwin.h
+$(XWIN_OBJ): xwin.h xwin.c
 	$(CC) -fPIC -c xwin.c
 
 $(XWIN_LIB): $(XWIN_OBJ)

@@ -1,27 +1,19 @@
-//#include <stdio.h>
 #include "xwin.h"
 
 struct _xwin {
 	Display *dpy;
-	int screen;
+	Screen *screen;
 	Window win;
 	int width;
-	int height; 
+	int height;
+	int screen_number;
 	int fullscreen;
-};
-
-struct hints
-{
-	unsigned long flags;
-	unsigned long functions;
-	unsigned long decorations;
-	long inputMode;
-	unsigned long status;
 };
 
 XWIN *xwin_init(int width, int height, int fullscreen)
 {
 	XWIN *xwin;
+	XSetWindowAttributes attribs;
 
 	xwin = (XWIN *) malloc(sizeof(XWIN));
 
@@ -30,54 +22,57 @@ XWIN *xwin_init(int width, int height, int fullscreen)
 	if ((xwin->dpy = XOpenDisplay(NULL)) == NULL)
 		return NULL;
 
-	xwin->screen = DefaultScreen(xwin->dpy);
+	xwin->screen = DefaultScreenOfDisplay(xwin->dpy);
 	xwin->width = width;
 	xwin->height = height;
 	xwin->fullscreen = fullscreen;
-	
+	xwin->screen_number = DefaultScreen(xwin->dpy);
+
+
+	attribs.background_pixel = WhitePixelOfScreen(xwin->screen);
+	attribs.override_redirect = False;
+	attribs.bit_gravity = NorthWestGravity;
+	attribs.win_gravity = NorthWestGravity;
+
+#if 1
+
+	xwin->win = XCreateWindow(xwin->dpy, RootWindow(xwin->dpy, xwin->screen_number),
+			0, 0, 1, 1, 0,
+			DefaultDepthOfScreen(xwin->screen), InputOutput,
+			DefaultVisualOfScreen(xwin->screen),
+			CWBackPixel | CWBackingStore | CWOverrideRedirect | CWColormap |
+			CWBorderPixel | CWWinGravity | CWBitGravity, &attribs);
+#else
+
+	xwin->win = XCreateSimpleWindow(xwin->dpy, RootWindow(xwin->dpy, xwin->screen_number),
+			0, 0, xwin->width, xwin->height,
+			1, BlackPixel(xwin->dpy, xwin->screen_number), WhitePixel(xwin->dpy, xwin->screen_number));
+#endif
+
 	return xwin;
 }
 
-/* 
- * http://stackoverflow.com/questions/5134297/xlib-how-does-this-removing-window-decoration-work
- * Hardly find the _MOTIF_WM_HINTS definition.
- * refrence freerdp source code.
- */
 static void xwin_fullscreen(XWIN *xwin)
 {
-	struct hints hints;
-	Atom _MOTIF_WM_HINTS;
+	int ret;
+	XEvent xevent;
+	Atom _NET_WM_STATE_FULLSCREEN = XInternAtom(xwin->dpy, "_NET_WM_STATE_FULLSCREEN", False);
 
-	hints.decorations = 0;
-	hints.functions = 1;
-	hints.flags = 1L << 1;
-	hints.inputMode = 0;
-	hints.status = 0;
-
-	_MOTIF_WM_HINTS = XInternAtom(xwin->dpy, "_MOTIF_WM_HINTS", False);
-
-	XChangeProperty(xwin->dpy, xwin->win, _MOTIF_WM_HINTS, _MOTIF_WM_HINTS, 32,
-		PropModeReplace, (unsigned char*) &hints, 5);
-
-	xwin->width = DisplayWidth(xwin->dpy, xwin->screen);
-	xwin->height = DisplayWidth(xwin->dpy, xwin->screen);
-
-	XMoveResizeWindow(xwin->dpy, xwin->win, 0, 0, xwin->width, xwin->height);
+	/* it works on openbox, KDE and ubuntu unity */
+	XChangeProperty(xwin->dpy, xwin->win, XInternAtom(xwin->dpy, "_NET_WM_STATE", True),
+				XA_ATOM, 32, PropModeReplace, (unsigned char *) &_NET_WM_STATE_FULLSCREEN, 1);
+	XSync(xwin->dpy, False);
 }
 
 void xwin_event_loop(XWIN *xwin)
 {
 	XEvent event;
 
-	xwin->win = XCreateSimpleWindow(xwin->dpy, RootWindow(xwin->dpy, xwin->screen),
-		0, 0, xwin->width, xwin->height,
-		1, BlackPixel(xwin->dpy, xwin->screen), WhitePixel(xwin->dpy, xwin->screen));
-
-	if (xwin->fullscreen)
+	if (xwin->fullscreen) {
 		xwin_fullscreen(xwin);
+	}
 
-	XMapRaised(xwin->dpy, xwin->win);
-
+	XMapWindow(xwin->dpy, xwin->win);
 	while (1) {
 		XNextEvent(xwin->dpy, &event);
 	}
