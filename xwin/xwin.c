@@ -19,8 +19,10 @@ XWIN *xwin_init(int width, int height, int fullscreen)
 
 	memset(xwin, 0, sizeof(XWIN));
 
-	if ((xwin->dpy = XOpenDisplay(NULL)) == NULL)
+	if ((xwin->dpy = XOpenDisplay(NULL)) == NULL) {
+		fprintf(stderr, "open display fail\n");
 		return NULL;
+	}
 
 	xwin->screen = DefaultScreenOfDisplay(xwin->dpy);
 	xwin->width = width;
@@ -30,18 +32,17 @@ XWIN *xwin_init(int width, int height, int fullscreen)
 
 
 	attribs.background_pixel = WhitePixelOfScreen(xwin->screen);
-	attribs.override_redirect = False;
-	attribs.bit_gravity = NorthWestGravity;
-	attribs.win_gravity = NorthWestGravity;
+	attribs.border_pixel = BlackPixelOfScreen(xwin->screen);
 
 #if 1
 
 	xwin->win = XCreateWindow(xwin->dpy, RootWindow(xwin->dpy, xwin->screen_number),
-			0, 0, 1, 1, 0,
+			0, 0, xwin->width, xwin->height, 0,
 			DefaultDepthOfScreen(xwin->screen), InputOutput,
 			DefaultVisualOfScreen(xwin->screen),
-			CWBackPixel | CWBackingStore | CWOverrideRedirect | CWColormap |
-			CWBorderPixel | CWWinGravity | CWBitGravity, &attribs);
+			CWBorderPixel | CWBackPixel , &attribs);
+			//CWBackPixel | CWBackingStore | CWOverrideRedirect | CWColormap |
+			//CWBorderPixel | CWWinGravity | CWBitGravity, &attribs);
 #else
 
 	xwin->win = XCreateSimpleWindow(xwin->dpy, RootWindow(xwin->dpy, xwin->screen_number),
@@ -73,6 +74,7 @@ void xwin_event_loop(XWIN *xwin)
 	}
 
 	XMapWindow(xwin->dpy, xwin->win);
+	XSelectInput(xwin->dpy, xwin->win, ExposureMask);
 	while (1) {
 		XNextEvent(xwin->dpy, &event);
 	}
